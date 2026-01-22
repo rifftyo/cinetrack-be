@@ -5,9 +5,7 @@ const cors = require('cors');
 
 const app = express();
 
-// =========================
-// FIX CORS for Railway
-// =========================
+// CORS FIX for Railway (Express 5 compatible)
 app.use(
   cors({
     origin: '*',
@@ -16,18 +14,14 @@ app.use(
   }),
 );
 
-// wajib agar preflight tidak gagal
-app.options('*', cors());
+// Preflight OPTIONS support (Express 5 fixes)
+app.options('(.*)', cors());
 
-// =========================
-// BODY PARSER
-// =========================
+// Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// =========================
-// ROUTES
-// =========================
+// Routes
 const authRoutes = require('./routes/authRoutes');
 const movieRoutes = require('./routes/movieRoutes');
 const watchedRoutes = require('./routes/watchedRoutes');
@@ -40,17 +34,11 @@ app.use('/api/watched', watchedRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/user', userRoutes);
 
-// =========================
-// HEALTH CHECK
-// =========================
+// Health check
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// =========================
-// START SERVER
-// =========================
+// Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server berjalan di port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
