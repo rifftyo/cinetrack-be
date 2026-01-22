@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const app = express();
 
-// CORS FIX for Railway (Express 5 compatible)
+// CORS FIX (tanpa app.options!)
 app.use(
   cors({
     origin: '*',
@@ -13,9 +13,6 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
-
-// Preflight OPTIONS support (Express 5 fixes)
-app.options('(.*)', cors());
 
 // Body parser
 app.use(express.json());
