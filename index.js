@@ -5,20 +5,29 @@ const cors = require('cors');
 
 const app = express();
 
-// ENABLE CORS → PENTING UNTUK RAILWAY (POST/PUT/DELETE)
+// =========================
+// FIX CORS for Railway
+// =========================
 app.use(
   cors({
     origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
 
-// FIX BODY PARSER
+// wajib agar preflight tidak gagal
+app.options('*', cors());
+
+// =========================
+// BODY PARSER
+// =========================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// =========================
 // ROUTES
+// =========================
 const authRoutes = require('./routes/authRoutes');
 const movieRoutes = require('./routes/movieRoutes');
 const watchedRoutes = require('./routes/watchedRoutes');
@@ -31,12 +40,16 @@ app.use('/api/watched', watchedRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/user', userRoutes);
 
-// HEALTH CHECK (opsional, tapi Railway suka ini)
+// =========================
+// HEALTH CHECK
+// =========================
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// SERVER START
+// =========================
+// START SERVER
+// =========================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server berjalan di port ${PORT}`);
