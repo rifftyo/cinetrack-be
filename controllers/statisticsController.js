@@ -20,12 +20,34 @@ const getStatistics = async (req, res) => {
     const userId = req.user.id;
     const currentYear = new Date().getFullYear();
 
-    const { data: movies, error } = await supabase
+    /** =============================
+     * QUERY PARAM: YEAR (OPTIONAL)
+     ============================== */
+    const requestedYear = req.query.year ? Number(req.query.year) : null;
+
+    if (req.query.year && isNaN(requestedYear)) {
+      return res.status(400).json({
+        message: 'Invalid year parameter',
+      });
+    }
+
+    /** =============================
+     * FETCH DATA
+     ============================== */
+    let query = supabase
       .from('watched_movies')
       .select(`user_rating, watched_at, genres`)
       .eq('user_id', userId)
       .order('watched_at', { ascending: true });
 
+    // Optimasi: filter langsung di DB kalau year dikirim
+    if (requestedYear) {
+      query = query
+        .gte('watched_at', `${requestedYear}-01-01`)
+        .lte('watched_at', `${requestedYear}-12-31`);
+    }
+
+    const { data: movies, error } = await query;
     if (error) throw error;
 
     if (!movies || movies.length === 0) {
@@ -36,10 +58,9 @@ const getStatistics = async (req, res) => {
     }
 
     /** =============================
-     * GROUP MOVIES BY YEAR
+     * GROUP BY YEAR
      ============================== */
     const moviesByYear = {};
-
     movies.forEach((m) => {
       const year = new Date(m.watched_at).getFullYear();
       if (!moviesByYear[year]) moviesByYear[year] = [];
@@ -47,7 +68,7 @@ const getStatistics = async (req, res) => {
     });
 
     /** =============================
-     * BUILD STATISTICS PER YEAR
+     * BUILD STATISTICS
      ============================== */
     const statistics = {};
 
@@ -60,7 +81,7 @@ const getStatistics = async (req, res) => {
         yearMovies.reduce((sum, m) => sum + Number(m.user_rating), 0) /
         totalWatched;
 
-      /** Watched this month (only for current year) */
+      /** Watched this month (only current year) */
       const now = new Date();
       const thisMonthCount =
         Number(year) === currentYear
@@ -73,10 +94,10 @@ const getStatistics = async (req, res) => {
             }).length
           : 0;
 
-      /** Day streak (unique days) */
+      /** Day streak */
       const uniqueDays = [
         ...new Set(
-          yearMovies.map((m) => new Date(m.watched_at).toDateString())
+          yearMovies.map((m) => new Date(m.watched_at).toDateString()),
         ),
       ];
 
@@ -96,7 +117,7 @@ const getStatistics = async (req, res) => {
         }
       }
 
-      /** Monthly (Jan–Dec) */
+      /** Monthly stats */
       const monthly = MONTH_NAMES.map((name) => ({
         month: name,
         count: 0,
@@ -107,7 +128,7 @@ const getStatistics = async (req, res) => {
         monthly[monthIndex].count++;
       });
 
-      /** Favorite genres (Top 6) */
+      /** Favorite genres */
       const genreMap = {};
       yearMovies.forEach((m) => {
         m.genres?.forEach((g) => {
@@ -149,12 +170,12 @@ const getStatistics = async (req, res) => {
       };
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Statistics fetched successfully',
       data: statistics,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Failed to fetch statistics',
       error: error.message,
     });
@@ -244,7 +265,7 @@ const getInsights = async (req, res) => {
     /** Hitung statistik singkat (tahun sekarang saja) */
     const currentYear = new Date().getFullYear();
     const yearMovies = movies.filter(
-      (m) => new Date(m.watched_at).getFullYear() === currentYear
+      (m) => new Date(m.watched_at).getFullYear() === currentYear,
     );
 
     if (yearMovies.length === 0) {
