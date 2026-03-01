@@ -1,5 +1,5 @@
 const supabase = require('../supabase/client');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 
 const MONTH_NAMES = [
   'January',
@@ -176,7 +176,7 @@ const updateProfile = async (req, res) => {
 
     if (file) {
       const fileExt = file.originalname.split('.').pop();
-      const fileName = `avatars/${userId}-${uuidv4()}.${fileExt}`;
+      const fileName = `avatars/${userId}-${randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
