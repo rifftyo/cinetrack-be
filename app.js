@@ -20,6 +20,4 @@ app.use('/api/watched', watchedRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/user', userRoutes);
 
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
+module.exports = app;
